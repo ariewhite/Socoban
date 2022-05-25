@@ -2,10 +2,8 @@ import pygame
 import pygame_menu
 import os
 
-from Button import Button
-
 pygame.init()
-pygame.key.set_repeat(200, 70)
+# pygame.key.set_repeat(200, 70)
 
 # создание холста и установка его разрешения
 size = width, height = (1280, 700)
@@ -23,8 +21,6 @@ all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 
-aqua = pygame.Color('#00FFFF')
-
 
 # метод загрузки изображений
 def load_image(name, colorkey=None):
@@ -40,7 +36,7 @@ def load_image(name, colorkey=None):
     return image
 
 
-# # метод загрузки уровня
+# метод загрузки уровня
 def load_level(name):
     fullname = os.path.join('res/levels/', name)
     with open(fullname, 'r') as mapFile:
@@ -115,26 +111,24 @@ class Player(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
 
 
-# # board
-# # class Board:
-# #     def __init__(self, width, height):
-# #         self.width = width
-# #         self.height = height
-# #         self.board = [[0] * width for _ in range(height)]
-# #
-# #     def set_view(self, left, top, cell_size):
-# #         self.left = left
-# #         self.top = top
-# #         self.cell_size = cell_size
-# #
-# #     def render(self):
-# #         return 0
+# board
+# class Board:
+#     def __init__(self, width, height):
+#         self.width = width
+#         self.height = height
+#         self.board = [[0] * width for _ in range(height)]
+#
+#     def set_view(self, left, top, cell_size):
+#         self.left = left
+#         self.top = top
+#         self.cell_size = cell_size
+#
+#     def render(self):
+#         return 0
 
 
 # генерация уровня
 def generate_level(level):
-    surface = pygame.display.set_mode((WIDTH, HEIGHT))
-    surface.blit(load_image('background_sl.jpg'), (0, 0))
     new_player, x, y = None, None, None
     for y in range(len(level)):
         for x in range(len(level[y])):
@@ -150,56 +144,26 @@ def generate_level(level):
                 Tile('wall', x, y)
 
 
-# стартовое меню
 def start_menu():
-    menu = pygame_menu.Menu("Main Menu", WIDTH, HEIGHT)
-    menu.add.text_input('Nick - ', default='Steve')
-    menu.add.button('Play', level_selecter)
+    menu = pygame_menu.Menu('Welcome', WIDTH, HEIGHT, theme=pygame_menu.themes.THEME_GREEN)
+    menu.add.text_input('Nick', default='Nickname')
+    menu.add.button('Select Level', select_level)
     menu.add.button('Quit', pygame_menu.events.EXIT)
+
     menu.mainloop(screen)
-    screen.blit(load_image('background_sl.jpg'), (0, 0))
 
 
-# меню выбора уровня
-def level_selecter():
-    pygame.display.set_caption("Level Selecter")
-    screen.blit(load_image('background_sl.jpg'), (0, 0))
+def select_level():
 
     while True:
-        levels = os.listdir(level_path)
-
-        mouse = pygame.mouse.get_pos()
-
-        buttons = []
-
-        for i in range(len(levels)):
-            button = Button(None, (162, 150 + 62 * i), levels[i], pygame.font.SysFont('comicsansms', 40),
-                            base_color='white', hovering_color='aqua')
-            button.changeColor(mouse)
-            button.update(screen)
-            buttons.append(button)
-
-            # text = font.render(levels[i], True, 'white')
-            # screen.blit(text, (162, 150 + 62 * i))
-            # pygame.draw.rect(screen, 'aqua', (130, 150 + 62 * i, 200, 60), 1)
-
-        back = Button(None, (1000, 500), 'Back', pygame.font.SysFont('comicsansms', 40),
-                      base_color='white', hovering_color='aqua')
-        back.changeColor(mouse)
-        back.update(screen)
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                for i in range(len(buttons)):
-                    if buttons[0].checkForInput(mouse):
-                        generate_level(levels[i])
-                    elif back.checkForInput(mouse):
-                        start_menu()
+            elif event.type == pygame.MOUSEMOTION:
+                print('Поз мыши - ', event.pos)
 
-        clock.tick(FPS)
-        pygame.display.update()
+        pygame.display.flip()
 
 
 start_menu()
+
