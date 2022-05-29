@@ -43,6 +43,8 @@ class Player(pygame.sprite.Sprite):
         self.image = animation_down[0]
         self.screen = screen
         self.rect = self.image.get_rect().move(x, y)
+        self.radius = 28
+
 
     # # move
     # def player_move(self, directory_of_movement):
@@ -121,6 +123,7 @@ class Player(pygame.sprite.Sprite):
             tester = Player(self.speed, self.rect[1] + self.speed, self.rect[0], self.screen)
 
         if pygame.sprite.spritecollideany(tester, group):
+            print(pygame.sprite.spritecollideany(tester, group))
             print('collision')
             tester.kill()
             return False

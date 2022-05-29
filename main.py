@@ -31,6 +31,7 @@ all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 wall_group = pygame.sprite.Group()
+box_group = pygame.sprite.Group()
 
 aqua = pygame.Color('#00FFFF')
 
@@ -150,6 +151,20 @@ class Box(pygame.sprite.Sprite):
         super().__init__(all_sprites)
         self.image = box_images['box']
         self.rect = self.image.get_rect().move(tile_width * x, tile_height * y)
+
+    def checkNextPos(self, directory_of_movement):
+        if directory_of_movement == 'right':
+            tester = Box(self.rect[0] + SPEED, self.rect[1])
+        elif directory_of_movement == 'left':
+            tester = Box(self.rect[0] - SPEED, self.rect[1])
+        elif directory_of_movement == 'up':
+            tester = Box(self.rect[1] - SPEED, self.rect[0])
+        else:
+            tester = Box(self.rect[1] + SPEED, self.rect[0])
+
+        if Box == pygame.sprite.spritecollideany(tester, box_group):
+            tester.kill()
+
 
 
 # box on goal

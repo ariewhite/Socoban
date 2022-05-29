@@ -9,7 +9,7 @@ clock = pygame.time.Clock()
 WIDHT = 800
 HEIGHT = 600
 FPS = 30
-SPEED = 3
+SPEED = 5
 
 screen = pygame.display.set_mode((WIDHT, HEIGHT))
 
@@ -72,10 +72,6 @@ class Tile(pygame.sprite.Sprite):
         self.image = wall_images
         self.rect = self.image.get_rect().move(x, y)
 
-    def collisium(self):
-        print('wall  -', self.rect)
-        return self.rect
-
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, speed, x, y):
@@ -85,8 +81,10 @@ class Player(pygame.sprite.Sprite):
         self.cur_frame = 0
         self.image = animation_down[0]
         self.rect = self.image.get_rect().move(x, y)
+        self.rect[0] = float(self.rect[0])
+        self.rect[1] = float(self.rect[1])
 
-    # draw
+
     def draw_player(self):
         global pos_x, pos_y
         global right, left, up, down
@@ -126,8 +124,6 @@ class Player(pygame.sprite.Sprite):
         print('player - ', self.rect)
 
     def dorabotat_possibility_move(self, directory_of_movement):
-        print('wall x -', walls[0].collisium()[0], 'wall y - ', walls[0].collisium()[1])
-        print('player x -', self.rect[0], 'player y - ', self.rect[1])
         if directory_of_movement == 'right':
             tester = Player(self.speed, self.rect[0] + self.speed, self.rect[1])
         elif directory_of_movement == 'left':
@@ -137,7 +133,7 @@ class Player(pygame.sprite.Sprite):
         else:
             tester = Player(self.speed, self.rect[1] + self.speed, self.rect[0])
 
-        if pygame.sprite.spritecollideany(tester, other_group):
+        if pygame.sprite.spritecollide(tester, other_group, dokill=False, collided=pygame.sprite.collide_rect_ratio(0.7)):
             print('collision')
             tester.kill()
             return False
@@ -145,13 +141,9 @@ class Player(pygame.sprite.Sprite):
             return True
 
 
-walls = []
 player = Player(SPEED, pos_x, pos_y)
-tile = Tile(200, 200)
-tile2 = Tile(200, 264)
-walls.append(tile)
-print(other_group)
-print(walls)
+tile2 = Tile(264, 264)
+tile3 = Tile(264+64, 264)
 
 running = True
 while running:
@@ -160,14 +152,14 @@ while running:
         if ev.type == pygame.QUIT:
             pygame.quit()
 
-    clock.tick(FPS)
-
     keys = pygame.key.get_pressed()
 
     if keys[pygame.K_LEFT] and pos_x > 5 and player.dorabotat_possibility_move('left'):
         pos_x -= player.speed
         left = True
         right = False
+        down = False
+        up = False
     elif keys[pygame.K_RIGHT] and pos_x < WIDHT and player.dorabotat_possibility_move('right'):
         pos_x += player.speed
         left = down = up = False
@@ -188,7 +180,9 @@ while running:
         if ev.type == pygame.QUIT:
             pygame.quit()
 
-    player.draw_player()
+    clock.tick(FPS)
+
     other_group.draw(screen)
     other_group.update()
-    pygame.display.flip()
+    player.draw_player()
+    pygame.display.update()
