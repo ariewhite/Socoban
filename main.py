@@ -153,6 +153,7 @@ class Box(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(tile_width * x, tile_height * y)
 
     def checkNextPos(self, directory_of_movement):
+        '''я создаю новый экз'''
         if directory_of_movement == 'right':
             tester = Box(self.rect[0] + SPEED, self.rect[1])
         elif directory_of_movement == 'left':
@@ -164,7 +165,6 @@ class Box(pygame.sprite.Sprite):
 
         if Box == pygame.sprite.spritecollideany(tester, box_group):
             tester.kill()
-
 
 
 # box on goal

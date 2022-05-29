@@ -124,6 +124,9 @@ class Player(pygame.sprite.Sprite):
         print('player - ', self.rect)
 
     def dorabotat_possibility_move(self, directory_of_movement):
+        '''я создаю новый экземпляр класса с координатами которые будет у экземляра после совершения хода
+        то есть current + "размер шага" и проверяю этот новый экземляр на коллизию со стенами, если коллзия есть
+        то ход не совершается.'''
         if directory_of_movement == 'right':
             tester = Player(self.speed, self.rect[0] + self.speed, self.rect[1])
         elif directory_of_movement == 'left':

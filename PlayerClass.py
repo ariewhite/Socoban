@@ -45,7 +45,6 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(x, y)
         self.radius = 28
 
-
     # # move
     # def player_move(self, directory_of_movement):
     #     if directory_of_movement == 'right':
@@ -130,5 +129,5 @@ class Player(pygame.sprite.Sprite):
         else:
             return True
 
-    # def update(self):
-    #     self.rect = self.image.get_rect().move(self.rect[0] + self.speed, self.rect[1] + self.speed)
+        # def update(self):
+        #     self.rect = self.image.get_rect().move(self.rect[0] + self.speed, self.rect[1] + self.speed)
