@@ -1,28 +1,19 @@
-import pygame
-import pygame_menu
 import os
+import pygame
+
 
 pygame.init()
-# pygame.key.set_repeat(200, 70)
 
-# создание холста и установка его разрешения
-size = width, height = (1280, 700)
-screen = pygame.display.set_mode(size)
-pygame.display.set_caption("Socoban")
 
-FPS = 50
-WIDTH = 1280
-HEIGHT = 700
 clock = pygame.time.Clock()
-level_path = os.getcwd() + '\\res\\levels\\'
+WIDHT = 800
+HEIGHT = 600
+FPS = 30
+SPEED = 3
 
-player = None
-all_sprites = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
-tiles_group = pygame.sprite.Group()
+screen = pygame.display.set_mode((WIDHT, HEIGHT))
 
 
-# метод загрузки изображений
 def load_image(name, colorkey=None):
     fullname = os.getcwd() + ''.join('\\res\\images\\' + name)
     image = pygame.image.load(fullname).convert()
@@ -36,134 +27,168 @@ def load_image(name, colorkey=None):
     return image
 
 
-# метод загрузки уровня
-def load_level(name):
-    fullname = os.path.join('res/levels/', name)
-    with open(fullname, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
+animation_right = [load_image('player_right0.png', -1),
+                   load_image('player_right1.png', -1),
+                   load_image('player_right2.png', -1),
+                   load_image('player_right1.png', -1),
+                   load_image('player_right2.png', -1),
+                   load_image('player_right0.png', -1)]
+animation_left = [load_image('player_left0.png', -1),
+                  load_image('player_left1.png', -1),
+                  load_image('player_left2.png', -1),
+                  load_image('player_left1.png', -1),
+                  load_image('player_left2.png', -1),
+                  load_image('player_left0.png', -1)]
+animation_up = [load_image('player_up0.png', -1),
+                load_image('player_up1.png', -1),
+                load_image('player_up2.png', -1),
+                load_image('player_up1.png', -1),
+                load_image('player_up2.png', -1),
+                load_image('player_up0.png', -1)]
+animation_down = [load_image('player_down0.png', -1),
+                  load_image('player_down1.png', -1),
+                  load_image('player_down2.png', -1),
+                  load_image('player_down1.png', -1),
+                  load_image('player_down2.png', -1),
+                  load_image('player_down0.png', -1)]
 
-    max_width = max(map(len, level_map))
+wall_images = load_image('wall.png', -1)
 
-    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+frame = 0
+pos_x = 10
+pos_y = 10
+left = False
+right = False
+up = False
+down = False
 
-
-# images
-tiles_images = {'wall': load_image("wall.png"),
-                'empty_gray': load_image("ground_gray.png"),
-                'empty_green': load_image("ground_green.png"),
-                'start_pos_green': load_image("ground_start_pos_gray.png"),
-                'start_pos_gray': load_image("ground_start_pos_green.png"),
-                'goal': load_image("goal.png")}
-player_image = {'player': load_image("player_right.png")}
-box_images = {'box': load_image("box_default.png"),
-              'box_on_goal': load_image("box_on_goal.png")}
-tile_height = tile_width = 64
+player_group = pygame.sprite.Group()
+other_group = pygame.sprite.Group()
 
 
-# default box
-class Box(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super().__init__(all_sprites)
-        self.image = box_images[0]
-        self.rect = self.image.get_rect().move(tile_width * x, tile_height * y)
-
-
-# box on goal
-class BoxOnGoal(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        super().__init__(all_sprites)
-        self.image = box_images[1]
-        self.rect = self.image.get_rect().move(tile_width * x, tile_height * x)
-
-
-# tile
 class Tile(pygame.sprite.Sprite):
-    def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(tiles_group, all_sprites)
-        self.image = tiles_images[tile_type]
-        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+    def __init__(self, x, y):
+        super().__init__(other_group)
+        self.image = wall_images
+        self.rect = self.image.get_rect().move(x, y)
+
+    def collisium(self):
+        print('wall  -', self.rect)
+        return self.rect
 
 
-# player
 class Player(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y):
+    def __init__(self, speed, x, y):
         super().__init__(player_group)
+        self.speed = speed
         self.frames = []
-        self.cut_sheet(sheet, columns, rows)
         self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(x, y)
+        self.image = animation_down[0]
+        self.rect = self.image.get_rect().move(x, y)
 
-    def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width,
-                                sheet.get_height)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(
-                    frame_location, self.rect.size)))
+    # draw
+    def draw_player(self):
+        global pos_x, pos_y
+        global right, left, up, down
+        global frame
 
-    # переопределяем метод update
+        if frame + 1 > 30:
+            frame = 0
+
+        if left:
+            self.cur_frame = frame // 5
+            self.image = animation_left[self.cur_frame]
+            screen.blit(self.image, (pos_x, pos_y))
+            frame += 1
+        elif right:
+            self.cur_frame = frame // 5
+            self.image = animation_right[self.cur_frame]
+            screen.blit(self.image, (pos_x, pos_y))
+            frame += 1
+        elif up:
+            self.cur_frame = frame // 5
+            self.image = animation_up[self.cur_frame]
+            screen.blit(self.image, (pos_x, pos_y))
+            frame += 1
+        elif down:
+            self.cur_frame = frame // 5
+            self.image = animation_down[self.cur_frame]
+            screen.blit(self.image, (pos_x, pos_y))
+            frame += 1
+        else:
+            screen.blit(animation_down[0], (pos_x, pos_y))
+
+        self.update()
+        pygame.display.update()
+
     def update(self):
-        self.cur_frame = (self.cur_frame + 1 % len(self.frames))
-        if self.cur_frame >= len(self.frames):
-            self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
+        self.rect = self.image.get_rect().move(pos_x + self.speed, pos_y + self.speed)
+        print('player - ', self.rect)
+
+    def dorabotat_possibility_move(self, directory_of_movement):
+        print('wall x -', walls[0].collisium()[0], 'wall y - ', walls[0].collisium()[1])
+        print('player x -', self.rect[0], 'player y - ', self.rect[1])
+        if directory_of_movement == 'right':
+            tester = Player(self.speed, self.rect[0] + self.speed, self.rect[1])
+        elif directory_of_movement == 'left':
+            tester = Player(self.speed, self.rect[0] - self.speed, self.rect[1])
+        elif directory_of_movement == 'up':
+            tester = Player(self.speed, self.rect[1] - self.speed, self.rect[0])
+        else:
+            tester = Player(self.speed, self.rect[1] + self.speed, self.rect[0])
+
+        if pygame.sprite.spritecollideany(tester, other_group):
+            print('collision')
+            tester.kill()
+            return False
+        else:
+            return True
 
 
-# board
-# class Board:
-#     def __init__(self, width, height):
-#         self.width = width
-#         self.height = height
-#         self.board = [[0] * width for _ in range(height)]
-#
-#     def set_view(self, left, top, cell_size):
-#         self.left = left
-#         self.top = top
-#         self.cell_size = cell_size
-#
-#     def render(self):
-#         return 0
+walls = []
+player = Player(SPEED, pos_x, pos_y)
+tile = Tile(200, 200)
+tile2 = Tile(200, 264)
+walls.append(tile)
+print(other_group)
+print(walls)
 
+running = True
+while running:
+    screen.fill('black')
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT:
+            pygame.quit()
 
-# генерация уровня
-def generate_level(level):
-    new_player, x, y = None, None, None
-    for y in range(len(level)):
-        for x in range(len(level[y])):
-            if level[y][x] == '@':
-                pass
-            elif level[y][x] == '.':
-                Tile('empty_green', x, y)
-            elif level[y][x] == '$':
-                Box(x, y)
-            elif level[y][x] == '*':
-                BoxOnGoal(x, y)
-            elif level[y][x] == '#':
-                Tile('wall', x, y)
+    clock.tick(FPS)
 
+    keys = pygame.key.get_pressed()
 
-def start_menu():
-    menu = pygame_menu.Menu('Welcome', WIDTH, HEIGHT, theme=pygame_menu.themes.THEME_GREEN)
-    menu.add.text_input('Nick', default='Nickname')
-    menu.add.button('Select Level', select_level)
-    menu.add.button('Quit', pygame_menu.events.EXIT)
+    if keys[pygame.K_LEFT] and pos_x > 5 and player.dorabotat_possibility_move('left'):
+        pos_x -= player.speed
+        left = True
+        right = False
+    elif keys[pygame.K_RIGHT] and pos_x < WIDHT and player.dorabotat_possibility_move('right'):
+        pos_x += player.speed
+        left = down = up = False
+        right = True
+    elif keys[pygame.K_UP] and pos_y > 5 and player.dorabotat_possibility_move('up'):
+        pos_y -= player.speed
+        up = True
+        right = left = down = False
+    elif keys[pygame.K_DOWN] and pos_y < HEIGHT and player.dorabotat_possibility_move('down'):
+        pos_y += player.speed
+        left = right = up = False
+        down = True
+    else:
+        left = up = down = right = False
+        frame = 0
 
-    menu.mainloop(screen)
+    for ev in pygame.event.get():
+        if ev.type == pygame.QUIT:
+            pygame.quit()
 
-
-def select_level():
-
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-            elif event.type == pygame.MOUSEMOTION:
-                print('Поз мыши - ', event.pos)
-
-        pygame.display.flip()
-
-
-start_menu()
-
+    player.draw_player()
+    other_group.draw(screen)
+    other_group.update()
+    pygame.display.flip()
