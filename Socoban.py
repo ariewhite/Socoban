@@ -1,6 +1,7 @@
 import os
 import pygame
 
+''' little version of the main application '''
 
 pygame.init()
 
@@ -17,7 +18,7 @@ screen = pygame.display.set_mode((WIDHT, HEIGHT))
 def load_image(name, colorkey=None):
     fullname = os.getcwd() + ''.join('\\res\\images\\' + name)
     image = pygame.image.load(fullname).convert()
-    # делаем фон прозрачным
+    # alpha
     if colorkey is not None:
         if colorkey == -1:
             colorkey = image.get_at((0, 0))
@@ -73,6 +74,7 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(x, y)
 
 
+# player
 class Player(pygame.sprite.Sprite):
     def __init__(self, speed, x, y):
         super().__init__(player_group)
@@ -84,7 +86,7 @@ class Player(pygame.sprite.Sprite):
         self.rect[0] = float(self.rect[0])
         self.rect[1] = float(self.rect[1])
 
-
+    # image drawing
     def draw_player(self):
         global pos_x, pos_y
         global right, left, up, down
@@ -121,20 +123,20 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.rect = self.image.get_rect().move(pos_x + self.speed, pos_y + self.speed)
-        print('player - ', self.rect)
+        # print('player - ', self.rect)
 
-    def dorabotat_possibility_move(self, directory_of_movement):
+    def possibility_of_movement(self, directory_of_movement):
         '''я создаю новый экземпляр класса с координатами которые будет у экземляра после совершения хода
         то есть current + "размер шага" и проверяю этот новый экземляр на коллизию со стенами, если коллзия есть
-        то ход не совершается.'''
+        то ход не совершается'''
         if directory_of_movement == 'right':
             tester = Player(self.speed, self.rect[0] + self.speed, self.rect[1])
         elif directory_of_movement == 'left':
             tester = Player(self.speed, self.rect[0] - self.speed, self.rect[1])
         elif directory_of_movement == 'up':
-            tester = Player(self.speed, self.rect[1] - self.speed, self.rect[0])
+            tester = Player(self.speed, self.rect[0], self.rect[1] - self.speed)
         else:
-            tester = Player(self.speed, self.rect[1] + self.speed, self.rect[0])
+            tester = Player(self.speed, self.rect[0], self.rect[1] + self.speed)
 
         if pygame.sprite.spritecollide(tester, other_group, dokill=False, collided=pygame.sprite.collide_rect_ratio(0.7)):
             print('collision')
@@ -147,6 +149,9 @@ class Player(pygame.sprite.Sprite):
 player = Player(SPEED, pos_x, pos_y)
 tile2 = Tile(264, 264)
 tile3 = Tile(264+64, 264)
+tile4 = Tile(446, 446)
+tile4 = Tile(382, 382)
+
 
 running = True
 while running:
@@ -157,24 +162,26 @@ while running:
 
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_LEFT] and pos_x > 5 and player.dorabotat_possibility_move('left'):
+    if keys[pygame.K_LEFT] and pos_x > 5 and player.possibility_of_movement('left'):
         pos_x -= player.speed
         left = True
         right = False
         down = False
         up = False
-    elif keys[pygame.K_RIGHT] and pos_x < WIDHT and player.dorabotat_possibility_move('right'):
+    elif keys[pygame.K_RIGHT] and pos_x < WIDHT and player.possibility_of_movement('right'):
         pos_x += player.speed
         left = down = up = False
         right = True
-    elif keys[pygame.K_UP] and pos_y > 5 and player.dorabotat_possibility_move('up'):
+    elif keys[pygame.K_UP] and pos_y > 5 and player.possibility_of_movement('up'):
         pos_y -= player.speed
         up = True
         right = left = down = False
-    elif keys[pygame.K_DOWN] and pos_y < HEIGHT and player.dorabotat_possibility_move('down'):
+    elif keys[pygame.K_DOWN] and pos_y < HEIGHT and player.possibility_of_movement('down'):
         pos_y += player.speed
         left = right = up = False
         down = True
+    elif keys[pygame.K_ESCAPE]:
+        pygame.quit()
     else:
         left = up = down = right = False
         frame = 0

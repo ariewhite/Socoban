@@ -16,6 +16,7 @@ pygame.init()
 screen = pygame.display.set_mode((1280, 700))
 pygame.display.set_caption("Socoban")
 
+# ------------consts-----------------
 FPS = Settings.FPS
 WIDTH = Settings.WIDTH
 HEIGHT = Settings.HEIGHT
@@ -26,15 +27,19 @@ pos_x = 0
 pos_y = 0
 clock = Settings.clock
 level_path = Settings.level_path
-
+# ------------groups-----------------
 all_sprites = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 wall_group = pygame.sprite.Group()
 box_group = pygame.sprite.Group()
-
+box_on_goal = pygame.sprite.Group()
+goal_group = pygame.sprite.Group()
+all_group = []
+boxs = []
+goals = []
+# ------------colors-----------------
 aqua = pygame.Color('#00FFFF')
-
 
 # images
 tiles_images = {'wall': Settings.load_image("wall.png", -1),
@@ -49,6 +54,11 @@ box_images = {'box': Settings.load_image("box_default.png"),
 
 wall_images = load_image('wall.png', -1)
 bg = load_image('background.jpg')
+level_bg = load_image('level_bg.jpg')
+
+# ------------sounds-----------------
+pygame.mixer.music.load(os.getcwd() + '\\res\\sounds\\fon.mp3')
+pygame.mixer.music.play(-1)
 
 
 # метод загрузки уровня
@@ -70,22 +80,26 @@ def play():
     running = True
     while running:
         keys = pygame.key.get_pressed()
+        pygame.mixer.music.load(os.getcwd() + '\\res\\sounds\\run.wav')
 
-        if keys[pygame.K_LEFT] and player.rect[0] > 1 and player.possibility_move('left', wall_group):
+        if keys[pygame.K_LEFT] and player.rect[0] > 1 and collision_movement(player.possibility_move('left')):
             player.draw_player('left')
-            # player.player_move('left')
-        elif keys[pygame.K_RIGHT] and player.rect[0] < WIDTH and player.possibility_move('right', wall_group):
+            pygame.mixer.music.play(0, fade_ms=1)
+            Settings.count_of_moves += 1
+        elif keys[pygame.K_RIGHT] and player.rect[0] < WIDTH and collision_movement(player.possibility_move('right')):
             player.draw_player('right')
-            # player.player_move('right')
-        elif keys[pygame.K_UP] and player.rect[1] > 1 and player.possibility_move('up', wall_group):
+            pygame.mixer.music.play(0, fade_ms=2)
+            Settings.count_of_moves += 1
+        elif keys[pygame.K_UP] and player.rect[1] > 1 and collision_movement(player.possibility_move('up')):
             player.draw_player('up')
-            # player.player_move('up')
-        elif keys[pygame.K_DOWN] and player.rect[1] < HEIGHT and player.possibility_move('down', wall_group):
+            pygame.mixer.music.play(0, fade_ms=3)
+            Settings.count_of_moves += 1
+        elif keys[pygame.K_DOWN] and player.rect[1] < HEIGHT and collision_movement(player.possibility_move('down')):
             player.draw_player('down')
-            # player.player_move('down')
+            pygame.mixer.music.play(0, fade_ms=4)
+            Settings.count_of_moves += 1
         else:
             player.frame = 0
-            # player.player_move('')
             player.draw_player('')
 
         for ev in pygame.event.get():
@@ -94,17 +108,59 @@ def play():
                 pygame.quit()
 
         clock.tick(FPS)
-        screen.fill('gray')
-        tiles_group.draw(screen)
-        tiles_group.update()
-        wall_group.draw(screen)
-        wall_group.update()
-        all_sprites.draw(screen)
-        all_sprites.update()
-        # player_group.draw(screen)
-        # player_group.update()
-        pygame.display.update()
-        pygame.display.flip()
+
+        update_level()
+
+        state_level()
+
+
+def collision_movement(tester):
+    if pygame.sprite.spritecollide(tester, wall_group,
+                                   collided=pygame.sprite.collide_rect_ratio(0.8), dokill=False):
+        print('collision with wall')
+        tester.kill()
+        return False
+    elif pygame.sprite.spritecollideany(tester, box_group):
+        print('collision with box')
+        boxs[0].go_move(tester.directory_of_move)
+        boxs[0].checkNextPos(tester.directory_of_move)
+        return True
+    elif pygame.sprite.spritecollide(tester, box_on_goal,
+                                     collided=pygame.sprite.collide_rect_ratio(0.9), dokill=False):
+        print('collision with box _ on goal')
+        return True
+    else:
+        return True
+
+
+def state_level():
+    for goal in goal_group:
+        if goal.complet:
+            continue
+
+        if pygame.sprite.spritecollide(goal, box_group, dokill=False,
+                                       collided=pygame.sprite.collide_rect_ratio(0.7)):
+            goal.complet = True
+        else:
+            goal.complet = False
+
+    count_box_on_goal = 0
+    for goal in goal_group:
+        if goal.complet:
+            count_box_on_goal += 1
+    if count_box_on_goal == len(goal_group):
+        level_complete()
+
+
+# update level
+def update_level():
+    screen.blit(level_bg, (0, 0))
+    all_sprites.draw(screen)
+    tiles_group.draw(screen)
+    box_group.draw(screen)
+    goal_group.draw(screen)
+    wall_group.draw(screen)
+    pygame.display.update()
 
 
 # генерация уровня
@@ -124,20 +180,26 @@ def generate_level(level):
                 pos_y = y * tile_width
                 pos_x = x * tile_height
             elif level[y][x] == '.':
-                Tile('goal', x, y)
+                goal = Goal(x, y)
+                goals.append(goal)
             elif level[y][x] == '$':
-                Box(x, y)
+                box = Box(x, y)
+                boxs.append(box)
             elif level[y][x] == '*':
-                BoxOnGoal(x, y)
+                box = Box(x, y)
+                boxs.append(box)
+                goal = Goal(x, y)
+                goals.append(goal)
             elif level[y][x] == '#':
                 tile = Tile('wall', x, y)
                 wall_group.add(tile)
             elif level[y][x] == ' ':
                 Tile('empty_gray', x, y)
 
-    print(all_sprites)
-    print(tiles_group)
-    print(player_group)
+    all_group.append(wall_group)
+    all_group.append(box_group)
+    all_group.append(box_on_goal)
+
     all_sprites.draw(screen)
     player_group.draw(screen)
     tiles_group.draw(screen)
@@ -148,12 +210,11 @@ def generate_level(level):
 # default box
 class Box(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        super().__init__(all_sprites)
+        super().__init__(all_sprites, box_group)
         self.image = box_images['box']
         self.rect = self.image.get_rect().move(tile_width * x, tile_height * y)
 
     def checkNextPos(self, directory_of_movement):
-        '''я создаю новый экз'''
         if directory_of_movement == 'right':
             tester = Box(self.rect[0] + SPEED, self.rect[1])
         elif directory_of_movement == 'left':
@@ -164,13 +225,26 @@ class Box(pygame.sprite.Sprite):
             tester = Box(self.rect[1] + SPEED, self.rect[0])
 
         if Box == pygame.sprite.spritecollideany(tester, box_group):
+            print('next pos - box')
             tester.kill()
+
+    def go_move(self, directory_of_movement):
+        if directory_of_movement == 'right':
+            self.rect[0] += SPEED
+        elif directory_of_movement == 'left':
+            self.rect[0] -= SPEED
+        elif directory_of_movement == 'up':
+            self.rect[1] -= SPEED
+        else:
+            self.rect[1] += SPEED
+
+        self.update()
 
 
 # box on goal
 class BoxOnGoal(pygame.sprite.Sprite):
     def __init__(self, x, y):
-        super().__init__(all_sprites)
+        super().__init__(all_sprites, box_on_goal)
         self.image = box_images['box_on_goal']
         self.rect = self.image.get_rect().move(tile_width * x, tile_height * y)
 
@@ -178,9 +252,18 @@ class BoxOnGoal(pygame.sprite.Sprite):
 # tile
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, x, y):
-        super().__init__(tiles_group)
+        super().__init__(all_sprites, tiles_group)
         self.image = tiles_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * x, tile_height * y)
+
+
+# goal
+class Goal(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__(all_sprites, goal_group)
+        self.image = tiles_images['goal']
+        self.rect = self.image.get_rect().move(x * tile_width, y * tile_height)
+        self.complet = False
 
 
 # стартовое меню
@@ -222,6 +305,11 @@ def level_selecter():
         back.changeColor(mouse)
         back.update(screen)
 
+        statistic = Button(None, (1000, 600), 'Statistics', pygame.font.SysFont('opensansregular', 30),
+                           base_color='white', hovering_color='aqua')
+        statistic.changeColor(mouse)
+        statistic.update(screen)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -233,9 +321,31 @@ def level_selecter():
                     elif back.checkForInput(mouse):
                         start_menu()
                         show = False
+                    elif statistic.checkForInput(mouse):
+                        statistics()
+                        show = False
 
         clock.tick(FPS)
         pygame.display.update()
+
+
+def statistics():
+    screen.blit(load_image('background_sl.jpg'), (0, 0))
+
+    show = True
+    while show:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
+        clock.tick(FPS)
+        pygame.display.update()
+
+
+def level_complete():
+    Settings.load_statistics()
+    print('perfect')
+    start_menu()
 
 
 start_menu()

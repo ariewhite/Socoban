@@ -2,10 +2,8 @@ import pygame
 
 from Settings import load_image
 
-
 pygame.init()
 surface = pygame.display.set_mode((1, 1))
-
 
 animation_right = [load_image('player_right0.png', -1),
                    load_image('player_right1.png', -1),
@@ -44,35 +42,20 @@ class Player(pygame.sprite.Sprite):
         self.screen = screen
         self.rect = self.image.get_rect().move(x, y)
         self.radius = 28
+        self.directory_of_move = ''
+        self.ration = 0
 
-    # # move
-    # def player_move(self, directory_of_movement):
-    #     if directory_of_movement == 'right':
-    #         self.image.get_rect().move(self.rect[0] + self.speed, self.rect[1])
-    #         self.rect[0] += self.speed
-    #         print('player - ', self.rect)
-    #         # self.draw_player('right', self.screen)
-    #     elif directory_of_movement == 'left':
-    #         self.image.get_rect().move(self.rect[0] - self.speed, self.rect[1])
-    #         self.rect[0] -= self.speed
-    #         print('player - ', self.rect)
-    #         # self.draw_player('left', self.screen)
-    #     elif directory_of_movement == 'up':
-    #         self.image.get_rect().move(self.rect[0], self.rect[1] - self.speed)
-    #         self.rect[1] -= self.speed
-    #         print('player - ', self.rect)
-    #         # self.draw_player('up', self.screen)
-    #     elif directory_of_movement == 'down':
-    #         self.image.get_rect().move(self.rect[0], self.rect[1] + self.speed)
-    #         self.rect[1] += self.speed
-    #         print('player - ', self.rect)
-    #         # self.draw_player('down', self.screen)
-    #     else:
-    #         print('staying')
-    #
-    #     self.update()
-    #     pygame.display.update()
-    #     pygame.display.flip()
+    # move
+    def next_movement(self):
+        if self.directory_of_move == 'right':
+            self.rect[0] += 64
+        elif self.directory_of_move == 'left':
+            self.rect[0] -= 64
+        elif self.directory_of_move == 'up':
+            self.rect[1] -= 64
+        elif self.directory_of_move == 'down':
+            self.rect[1] += 64
+        self.ration += 1
 
     # draw
     def draw_player(self, directory_of_movement):
@@ -111,23 +94,19 @@ class Player(pygame.sprite.Sprite):
         self.update()
         pygame.display.flip()
 
-    def possibility_move(self, directory_of_movement, group):
+    def possibility_move(self, directory_of_movement):
         if directory_of_movement == 'right':
             tester = Player(self.speed, self.rect[0] + self.speed, self.rect[1], self.screen)
+            tester.directory_of_move = 'right'
+            print('right movement')
         elif directory_of_movement == 'left':
             tester = Player(self.speed, self.rect[0] - self.speed, self.rect[1], self.screen)
+            tester.directory_of_move = 'left'
         elif directory_of_movement == 'up':
-            tester = Player(self.speed, self.rect[1] - self.speed, self.rect[0], self.screen)
+            tester = Player(self.speed, self.rect[0], self.rect[1] - self.speed, self.screen)
+            tester.directory_of_move = 'up'
         else:
-            tester = Player(self.speed, self.rect[1] + self.speed, self.rect[0], self.screen)
+            tester = Player(self.speed, self.rect[0], self.rect[1] + self.speed, self.screen)
+            tester.directory_of_move = 'down'
 
-        if pygame.sprite.spritecollideany(tester, group):
-            print(pygame.sprite.spritecollideany(tester, group))
-            print('collision')
-            tester.kill()
-            return False
-        else:
-            return True
-
-        # def update(self):
-        #     self.rect = self.image.get_rect().move(self.rect[0] + self.speed, self.rect[1] + self.speed)
+        return tester
