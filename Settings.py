@@ -14,6 +14,7 @@ clock = pygame.time.Clock()
 # ------------statistics-----------------
 count_of_moves = 0
 levels_completed = 0
+cur_level = 0
 # ------------path--------------------
 level_path = os.getcwd() + '\\res\\levels\\'
 stat_path = os.getcwd() + '\\res\\statistics.dontopen'
@@ -34,8 +35,12 @@ def load_image(name, colorkey=None):
 
 
 def load_statistics():
-    with open(stat_path, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
+    file = open(stat_path, 'w')
+    file.write(str(count_of_moves))
+    file.close()
 
-    level_map[0] = str(count_of_moves)
-    level_map[1] = str(levels_completed)
+
+def get_statistics():
+    global count_of_moves
+    file = open(stat_path, 'r')
+    count_of_moves = int(file.read())

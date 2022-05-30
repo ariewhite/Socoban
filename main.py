@@ -1,6 +1,7 @@
 import pygame
 import pygame_menu
 import os
+import plyer
 
 import Settings
 import PlayerClass
@@ -40,6 +41,7 @@ boxs = []
 goals = []
 # ------------colors-----------------
 aqua = pygame.Color('#00FFFF')
+dark_gray = pygame.Color('#A9A9A9')
 
 # images
 tiles_images = {'wall': Settings.load_image("wall.png", -1),
@@ -55,10 +57,6 @@ box_images = {'box': Settings.load_image("box_default.png"),
 wall_images = load_image('wall.png', -1)
 bg = load_image('background.jpg')
 level_bg = load_image('level_bg.jpg')
-
-# ------------sounds-----------------
-pygame.mixer.music.load(os.getcwd() + '\\res\\sounds\\fon.mp3')
-pygame.mixer.music.play(-1)
 
 
 # метод загрузки уровня
@@ -80,7 +78,7 @@ def play():
     running = True
     while running:
         keys = pygame.key.get_pressed()
-        pygame.mixer.music.load(os.getcwd() + '\\res\\sounds\\run.wav')
+        pygame.mixer.music.load(os.getcwd() + '\\res\\sounds\\run.mp3')
 
         if keys[pygame.K_LEFT] and player.rect[0] > 1 and collision_movement(player.possibility_move('left')):
             player.draw_player('left')
@@ -98,6 +96,12 @@ def play():
             player.draw_player('down')
             pygame.mixer.music.play(0, fade_ms=4)
             Settings.count_of_moves += 1
+        elif keys[pygame.K_ESCAPE]:
+            level_selecter()
+            running = False
+        elif keys[pygame.K_r]:
+            generate_level(Settings.cur_level)
+            running = False
         else:
             player.frame = 0
             player.draw_player('')
@@ -121,25 +125,32 @@ def collision_movement(tester):
         tester.kill()
         return False
     elif pygame.sprite.spritecollideany(tester, box_group):
+        sprite1 = pygame.sprite.spritecollideany(tester, box_group)
         print('collision with box')
-        boxs[0].go_move(tester.directory_of_move)
-        boxs[0].checkNextPos(tester.directory_of_move)
+        for box in boxs:
+            if pygame.sprite.collide_rect(box, sprite1):
+                box.go_move(tester.directory_of_move)
+                tester.kill()
+
         return True
     elif pygame.sprite.spritecollide(tester, box_on_goal,
                                      collided=pygame.sprite.collide_rect_ratio(0.9), dokill=False):
         print('collision with box _ on goal')
+        tester.kill()
         return True
     else:
         return True
 
 
 def state_level():
+    for box in box_group:
+        if pygame.sprite.spritecollide(box, goal_group, dokill=False):
+            box.image = box_images['box_on_goal']
     for goal in goal_group:
         if goal.complet:
             continue
 
-        if pygame.sprite.spritecollide(goal, box_group, dokill=False,
-                                       collided=pygame.sprite.collide_rect_ratio(0.7)):
+        if pygame.sprite.spritecollide(goal, box_group, dokill=False):
             goal.complet = True
         else:
             goal.complet = False
@@ -167,7 +178,7 @@ def update_level():
 def generate_level(level):
     print('generate_level')
     global pos_x, pos_y
-
+    Settings.cur_level = level
     level = load_level(level)
 
     screen.blit(Settings.load_image('background.jpg'), (0, 0))
@@ -214,19 +225,15 @@ class Box(pygame.sprite.Sprite):
         self.image = box_images['box']
         self.rect = self.image.get_rect().move(tile_width * x, tile_height * y)
 
-    def checkNextPos(self, directory_of_movement):
-        if directory_of_movement == 'right':
-            tester = Box(self.rect[0] + SPEED, self.rect[1])
-        elif directory_of_movement == 'left':
-            tester = Box(self.rect[0] - SPEED, self.rect[1])
-        elif directory_of_movement == 'up':
-            tester = Box(self.rect[1] - SPEED, self.rect[0])
-        else:
-            tester = Box(self.rect[1] + SPEED, self.rect[0])
-
-        if Box == pygame.sprite.spritecollideany(tester, box_group):
-            print('next pos - box')
+    @staticmethod
+    def checkNextPos(tester):
+        if pygame.sprite.spritecollide(tester, wall_group,
+                                       collided=pygame.sprite.collide_rect_ratio(0.8), dokill=False):
+            print('collision with wall')
             tester.kill()
+            return False
+        else:
+            return True
 
     def go_move(self, directory_of_movement):
         if directory_of_movement == 'right':
@@ -268,6 +275,11 @@ class Goal(pygame.sprite.Sprite):
 
 # стартовое меню
 def start_menu():
+    # ------------sounds-----------------
+    pygame.mixer.music.load(os.getcwd() + '\\res\\sounds\\fon.mp3')
+    pygame.mixer.music.play(-1)
+
+    # ------------menu-----------------
     print('start_menu')
     menu = pygame_menu.Menu("Main Menu", WIDTH, HEIGHT)
     menu.add.text_input('Nick - ', default='Steve')
@@ -334,18 +346,43 @@ def statistics():
 
     show = True
     while show:
+        mouse = pygame.mouse.get_pos()
+
+        stat = Button(None, (200, 200), 'count of movement - ' + str(Settings.count_of_moves),
+                      pygame.font.SysFont('opensansregular', 30),
+                      base_color='white', hovering_color='aqua')
+        stat.update(screen)
+        stat.changeColor(mouse)
+        back = Button(None, (1000, 500), 'Back', pygame.font.SysFont('opensansregular', 30),
+                      base_color='white', hovering_color='aqua')
+        back.changeColor(mouse)
+        back.update(screen)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if back.checkForInput(mouse):
+                    level_selecter()
+                    show = False
 
         clock.tick(FPS)
         pygame.display.update()
 
 
 def level_complete():
+    # ------------sounds-----------------
+    pygame.mixer.music.load(os.getcwd() + '\\res\\sounds\\level_completed.mp3')
+    pygame.mixer.music.play(0)
+    
     Settings.load_statistics()
-    print('perfect')
-    start_menu()
+    Settings.get_statistics()
+
+    plyer.notification.notify(message='Level Completed',
+                              app_name='Socoban',
+                              title='congratulations!')
+
+    level_selecter()
 
 
 start_menu()

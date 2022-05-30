@@ -59,7 +59,6 @@ class Player(pygame.sprite.Sprite):
 
     # draw
     def draw_player(self, directory_of_movement):
-        print('draw_player')
 
         if self.frame + 1 > 30:
             self.frame = 0
@@ -70,35 +69,38 @@ class Player(pygame.sprite.Sprite):
             self.screen.blit(self.image, (self.rect[0], self.rect[1]))
             self.frame += 1
             self.rect[0] -= self.speed
+            print('player - ', self.rect)
         elif directory_of_movement == 'right':
             self.cur_frame = self.frame // 5
             self.image = animation_right[self.cur_frame]
             self.screen.blit(self.image, (self.rect[0], self.rect[1]))
             self.frame += 1
             self.rect[0] += self.speed
+            print('player - ', self.rect)
         elif directory_of_movement == 'up':
             self.cur_frame = self.frame // 5
             self.image = animation_up[self.cur_frame]
             self.screen.blit(self.image, (self.rect[0], self.rect[1]))
             self.frame += 1
             self.rect[1] -= self.speed
+            print('player - ', self.rect)
         elif directory_of_movement == 'down':
             self.cur_frame = self.frame // 5
             self.image = animation_down[self.cur_frame]
             self.screen.blit(self.image, (self.rect[0], self.rect[1]))
             self.frame += 1
             self.rect[1] += self.speed
+            print('player - ', self.rect)
         else:
             self.screen.blit(animation_down[0], (self.rect[0], self.rect[1]))
 
         self.update()
-        pygame.display.flip()
+        pygame.display.update()
 
     def possibility_move(self, directory_of_movement):
         if directory_of_movement == 'right':
             tester = Player(self.speed, self.rect[0] + self.speed, self.rect[1], self.screen)
             tester.directory_of_move = 'right'
-            print('right movement')
         elif directory_of_movement == 'left':
             tester = Player(self.speed, self.rect[0] - self.speed, self.rect[1], self.screen)
             tester.directory_of_move = 'left'
