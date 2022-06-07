@@ -129,9 +129,12 @@ def collision_movement(tester):
         print('collision with box')
         for box in boxs:
             if pygame.sprite.collide_rect(box, sprite1):
-                box.go_move(tester.directory_of_move)
-                tester.kill()
+                tester.next_movement()
+                if box.checkNextPos(tester):
+                    box.go_move(tester.directory_of_move)
+                    return False
 
+                tester.kill()
         return True
     elif pygame.sprite.spritecollide(tester, box_on_goal,
                                      collided=pygame.sprite.collide_rect_ratio(0.9), dokill=False):
@@ -229,8 +232,7 @@ class Box(pygame.sprite.Sprite):
     def checkNextPos(tester):
         if pygame.sprite.spritecollide(tester, wall_group,
                                        collided=pygame.sprite.collide_rect_ratio(0.8), dokill=False):
-            print('collision with wall')
-            tester.kill()
+            print('next collision with wall')
             return False
         else:
             return True

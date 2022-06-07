@@ -55,6 +55,7 @@ class Player(pygame.sprite.Sprite):
             self.rect[1] -= 64
         elif self.directory_of_move == 'down':
             self.rect[1] += 64
+        print('tester edit coord', self.rect)
         self.ration += 1
 
     # draw
