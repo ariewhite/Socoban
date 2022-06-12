@@ -2,7 +2,6 @@ import pygame
 import pygame_menu
 import os
 import plyer
-import sqlite3
 
 import Settings
 import PlayerClass
@@ -350,7 +349,7 @@ def statistics():
     while show:
         mouse = pygame.mouse.get_pos()
 
-        stat = Button(None, (200, 200), 'count of movement - ' + str(Settings.count_of_moves),
+        stat = Button(None, (200, 200), 'count of movement - ' + str(Settings.get_statistics()),
                       pygame.font.SysFont('opensansregular', 30),
                       base_color='white', hovering_color='aqua')
         stat.update(screen)
@@ -378,7 +377,6 @@ def level_complete():
     pygame.mixer.music.play(0)
 
     Settings.load_statistics()
-    Settings.get_statistics()
 
     plyer.notification.notify(message='Level Completed',
                               app_name='Socoban',

@@ -57,6 +57,5 @@ def load_statistics():
 
 
 def get_statistics():
-    global count_of_moves
     for value in cursor.execute("select * from users"):
-        count_of_moves = value
+        return value
