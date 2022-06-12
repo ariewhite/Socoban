@@ -1,5 +1,6 @@
 import pygame
 import os
+import sqlite3
 
 pygame.init()
 # ------------size-----------------
@@ -19,6 +20,19 @@ cur_level = 0
 level_path = os.getcwd() + '\\res\\levels\\'
 stat_path = os.getcwd() + '\\res\\statistics.dontopen'
 
+try:
+    sqlite_connection = sqlite3.connect('sqlite_python.db')
+    cursor = sqlite_connection.cursor()
+    print("База данных создана и успешно подключена к SQLite")
+
+    sqlite_select_query = "create table if not exists users (" \
+                          "count_of_movement INTEGER)"
+    cursor.execute(sqlite_select_query)
+    sqlite_connection.commit()
+
+except sqlite3.Error as error:
+    print("Ошибка при подключении к sqlite", error)
+
 
 # метод загрузки изображений
 def load_image(name, colorkey=None):
@@ -35,12 +49,14 @@ def load_image(name, colorkey=None):
 
 
 def load_statistics():
-    file = open(stat_path, 'w')
-    file.write(str(count_of_moves))
-    file.close()
+    cursor.execute("select * from users")
+    cursor.execute(f"insert into users values ({count_of_moves})")
+    sqlite_connection.commit()
+
+    print('vse okey')
 
 
 def get_statistics():
     global count_of_moves
-    file = open(stat_path, 'r')
-    count_of_moves = int(file.read())
+    for value in cursor.execute("select * from users"):
+        count_of_moves = value

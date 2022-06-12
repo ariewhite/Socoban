@@ -2,6 +2,7 @@ import pygame
 import pygame_menu
 import os
 import plyer
+import sqlite3
 
 import Settings
 import PlayerClass
@@ -70,8 +71,6 @@ def load_level(name):
 
 # игровое поле
 def play():
-    global pos_x, pos_y
-
     player = PlayerClass.Player(SPEED, pos_x, pos_y, screen)
     player_group.add(player)
 
@@ -134,8 +133,7 @@ def collision_movement(tester):
                     box.go_move(tester.directory_of_move)
                     return False
 
-                tester.kill()
-        return True
+            return True
     elif pygame.sprite.spritecollide(tester, box_on_goal,
                                      collided=pygame.sprite.collide_rect_ratio(0.9), dokill=False):
         print('collision with box _ on goal')
@@ -143,6 +141,8 @@ def collision_movement(tester):
         return True
     else:
         return True
+
+    tester.kill()
 
 
 def state_level():
@@ -376,7 +376,7 @@ def level_complete():
     # ------------sounds-----------------
     pygame.mixer.music.load(os.getcwd() + '\\res\\sounds\\level_completed.mp3')
     pygame.mixer.music.play(0)
-    
+
     Settings.load_statistics()
     Settings.get_statistics()
 
